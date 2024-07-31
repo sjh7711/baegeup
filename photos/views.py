@@ -44,6 +44,10 @@ def photo_list(request):
         photos = photos.order_by('-likes')
     else:
         photos = photos.order_by('-uploaded_at')
+        
+    # 각 사진의 댓글 수를 가져와 템플릿에 전달
+    for photo in photos:
+        photo.comment_count = photo.comments.count()
 
     paginator = Paginator(photos, 16)
     page_number = request.GET.get('page')
@@ -70,6 +74,11 @@ def today_photos(request):
         photos = photos.order_by('-likes')
     else:
         photos = photos.order_by('-uploaded_at')
+        
+     # 각 사진의 댓글 수를 가져와 템플릿에 전달
+    for photo in photos:
+        photo.comment_count = photo.comments.count()
+
 
     paginator = Paginator(photos, 16)
     page_number = request.GET.get('page')
@@ -88,6 +97,11 @@ def my_photos(request):
         photos = Photo.objects.filter(uploaded_by=request.user).order_by('-likes')
     else:
         photos = Photo.objects.filter(uploaded_by=request.user).order_by('-uploaded_at')
+        
+     # 각 사진의 댓글 수를 가져와 템플릿에 전달
+    for photo in photos:
+        photo.comment_count = photo.comments.count()
+
 
     paginator = Paginator(photos, 16)
     page_number = request.GET.get('page')
@@ -112,6 +126,11 @@ def liked_photos(request):
         photos = photos.order_by('-likes')
     else:
         photos = photos.order_by('-uploaded_at')
+        
+     # 각 사진의 댓글 수를 가져와 템플릿에 전달
+    for photo in photos:
+        photo.comment_count = photo.comments.count()
+
 
     paginator = Paginator(photos, 16)
     page_number = request.GET.get('page')

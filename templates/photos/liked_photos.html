@@ -60,6 +60,7 @@
                                             🤍 {{ photo.likes }}
                                         {% endif %}
                                     </button>
+                                    <span class="comment-count" style="float: right; font-size: 1.3em;">💬 {{ photo.comment_count }}</span>
                                     <input type="checkbox" name="photo_ids" value="{{ photo.id }}" class="photo-checkbox large-checkbox">
                                 </div>
                             {% else %}

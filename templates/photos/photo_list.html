@@ -47,6 +47,7 @@
                         {% else %}
                             <a href="{% url 'login' %}" class="btn btn-primary">🤍 {{ photo.likes }}</a>
                         {% endif %}
+                        <span class="comment-count" style="float: right; font-size: 1.3em;">💬 {{ photo.comment_count }}</span>
                     </div>
                 </div>
             </div>
