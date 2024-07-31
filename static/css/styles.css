@@ -1,0 +1,15 @@
+/* 예시 CSS */
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.navbar.dark-mode {
+    background-color: #333333;
+}
+
+.card.dark-mode {
+    background-color: #444444;
+    color: #ffffff;
+}
+

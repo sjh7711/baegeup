@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}오늘의 배급{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="my-4">오늘의 배급</h1>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <a href="?sort=latest" class="btn btn-primary">최신순</a>
+            <a href="?sort=likes" class="btn btn-primary">찜순</a>
+        </div>
+        <form method="GET" action="{% url 'today_photos' %}" class="form-inline">
+            <div class="form-group mr-2">
+                <label for="search_type" class="mr-2"></label>
+                <select id="search_type" name="search_type" class="form-control">
+                    <option value="description" {% if request.GET.search_type == 'description' %}selected{% endif %}>태그</option>
+                    <option value="username" {% if request.GET.search_type == 'username' %}selected{% endif %}>업로더</option>
+                </select>
+            </div>
+            <div class="form-group mr-2">
+                <label for="query" class="mr-2"></label>
+                <input type="text" id="query" name="query" class="form-control" value="{{ request.GET.query }}">
+            </div>
+            <button type="submit" class="btn btn-primary">검색</button>
+        </form>
+    </div>
+
+    <div class="row">
+        {% for photo in photos %}
+            <div class="col-lg-3 col-md-4 col-6 mb-4">
+                <div class="card">
+                    <a href="{% url 'photo_detail' photo.id %}">
+                        <img src="{{ photo.image.url }}" class="card-img-top" alt="...">
+                    </a>
+                    <div class="card-body">
+                        <p class="card-text">업로더 : {{ photo.uploaded_by.username }}</p>
+                        <p class="card-text">{{ photo.description }}</p>
+                        {% if user.is_authenticated %}
+                            <button class="btn btn-primary like-button" data-photo-id="{{ photo.id }}">
+                                {% if user in photo.liked_by.all %}
+                                    ❤️ {{ photo.likes }}
+                                {% else %}
+                                    🤍 {{ photo.likes }}
+                                {% endif %}
+                            </button>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">🤍 {{ photo.likes }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="pagination d-flex justify-content-center">
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if photos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in photos.paginator.page_range %}
+                {% if photos.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                {% elif num > photos.number|add:'-3' and num < photos.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if photos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ photos.paginator.num_pages }}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const photoId = this.getAttribute('data-photo-id');
+                fetch(`{% url 'like_photo' 0 %}`.replace('0', photoId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ photo_id: photoId })
+                })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        this.innerHTML = data.liked ? `❤️ ${data.likes}` : `🤍 ${data.likes}`;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
+{% endblock %}

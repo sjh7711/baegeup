@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}사진{% endblock %}
+
+{% block content %}
+<body>
+    <div class="container mt-4">
+        <div class="photo-container">
+            <div class="photo-card card mb-4">
+                <div style="text-align: center;margin-top: 20px;">
+                    <img src="{{ photo.image.url }}" class="card-img-top" alt="..." style="max-width: 600px; max-height: 900px;">
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'update_descriptions' %}">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <p class="card-text">업로더 : {{ photo.uploaded_by.username }}</p>
+                            <p class="card-text">{{ photo.uploaded_at|date:"Y년 m월 d일 H시 i분" }}</p>
+                        </div>
+                        <input type="hidden" name="photo_ids" value="{{ photo.id }}">
+                        <input type="text" name="descriptions" value="{{ photo.description }}" class="form-control mb-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                {% if user.is_authenticated %}
+                                    <button type="button" class="btn btn-primary like-button" data-photo-id="{{ photo.id }}">
+                                        {% if user in photo.liked_by.all %}
+                                            ❤️ {{ photo.likes }}
+                                        {% else %}
+                                            🤍 {{ photo.likes }}
+                                        {% endif %}
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="btn btn-primary">🤍 {{ photo.likes }}</a>
+                                {% endif %}
+                            </div>
+                            {% if user.is_authenticated and user == photo.uploaded_by %}
+                                <button type="submit" class="btn btn-primary update-descriptions-btn mr-2">태그 변경</button>
+                                <a href="{% url 'delete_photo' photo.id %}" class="btn btn-danger">삭제</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">
+                    ❤️ 를 누른 사람
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for user in photo.liked_by.all %}
+                        <li class="list-group-item">{{ user.username }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="comment-section card mb-4">
+                <div class="comments mb-4" style="margin: 10px;">
+                    <h5>댓글</h5>
+                    {% if user.is_authenticated %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <textarea name="comment" class="form-control" rows="3" placeholder="댓글을 입력하세요"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">등록 </button>
+                        </form>
+                    {% else %}
+                        <p>댓글을 다려면 <a href="{% url 'login' %}">로그인</a>하세요</p>
+                    {% endif %}
+                    <div class="mt-4">
+                        {% for comment in photo.comments.all %}
+                        <div class="comment-box mb-2 p-2" style="position: relative; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px;">
+                            {% if user == comment.user %}
+                                <form method="post" action="{% url 'delete_comment' comment.id %}" style="position: absolute; top: 10px; right: 10px;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" style="height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center;">삭제</button>
+                                </form>
+                            {% endif %}
+                            <strong>{{ comment.user.username }}</strong> <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                            <p>{{ comment.text }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>   
+    document.querySelector('.update-descriptions-btn').addEventListener('click', function(event) {
+    event.preventDefault();
+    const form = this.closest('form');
+    form.action = "{% url 'update_descriptions' %}";
+    console.log(form)
+    form.submit();
+});
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const photoId = this.getAttribute('data-photo-id');
+                fetch(`{% url 'like_photo' 0 %}`.replace('0', photoId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ photo_id: photoId })
+                })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        this.innerHTML = data.liked ? `❤️ ${data.likes}` : `🤍 ${data.likes}`;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
+
+{% endblock %}

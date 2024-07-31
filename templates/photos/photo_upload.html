@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}사진 업로드{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h1 class="my-4">사진 업로드 (최대 20개)</h1>
+    <form id="uploadForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="file-input-container">
+            {{ form.images }}
+        </div>
+        <div id="preview" class="row"></div>
+        <div class="d-flex justify-content-between">
+            <button type="button" id="removeSelected" class="btn btn-danger mt-3">선택된 사진 삭제</button>
+            <button type="submit" class="btn btn-primary mt-3">업로드</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let filesArray = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.querySelector('input[type="file"]');
+        const previewContainer = document.getElementById('preview');
+
+        fileInput.classList.add('btn', 'btn-secondary', 'mt-3');
+        fileInput.style.display = 'block';
+        fileInput.style.marginBottom = '20px';
+        fileInput.setAttribute('accept', 'image/*');
+
+        fileInput.addEventListener('change', function(event) {
+            const newFiles = Array.from(event.target.files);
+            newFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-lg-3 col-md-4 col-6 mb-4';
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    const imageContainer = document.createElement('div');
+                    imageContainer.style.position = 'relative';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'card-img-top';
+                    imageContainer.appendChild(img);
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.dataset.index = filesArray.length;
+                    checkbox.style.position = 'absolute';
+                    checkbox.style.top = '10px';
+                    checkbox.style.right = '10px';
+                    imageContainer.appendChild(checkbox);
+                    
+                    img.addEventListener('click', () => {
+                        checkbox.checked = !checkbox.checked;
+                    });
+                    
+                    card.appendChild(imageContainer);
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body';
+                    const descriptionInput = document.createElement('textarea');
+                    descriptionInput.name = 'descriptions';
+                    descriptionInput.placeholder = 'tags';
+                    descriptionInput.className = 'form-control mt-2';
+                    cardBody.appendChild(descriptionInput);
+                    card.appendChild(cardBody);
+                    
+                    col.appendChild(card);
+                    previewContainer.appendChild(col);
+
+                    // 파일과 설명을 객체로 묶어 배열에 추가
+                    filesArray.push({ file: file, description: descriptionInput });
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            filesArray.forEach((item, index) => {
+                formData.append('images', item.file);
+                formData.append('descriptions', item.description.value);
+            });
+            fetch("{% url 'upload_photo' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = "{% url 'photo_list' %}";
+                } else {
+                    alert('Upload failed.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed.');
+            });
+        });
+
+        document.getElementById('removeSelected').addEventListener('click', removeSelectedFiles);
+    });
+
+    function removeSelectedFiles() {
+        const checkboxes = document.querySelectorAll('#preview input[type="checkbox"]:checked');
+        const indicesToRemove = Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.index));
+        filesArray = filesArray.filter((_, index) => !indicesToRemove.includes(index));
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const previewContainer = document.getElementById('preview');
+        previewContainer.innerHTML = '';
+        filesArray.forEach((item, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-lg-3 col-md-4 col-6 mb-4';
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const imageContainer = document.createElement('div');
+            imageContainer.style.position = 'relative';
+            
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(item.file);
+            img.className = 'card-img-top';
+            imageContainer.appendChild(img);
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.dataset.index = index;
+            checkbox.style.position = 'absolute';
+            checkbox.style.top = '10px';
+            checkbox.style.right = '10px';
+            imageContainer.appendChild(checkbox);
+            
+            img.addEventListener('click', () => {
+                checkbox.checked = !checkbox.checked;
+            });
+            
+            card.appendChild(imageContainer);
+            
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+            const descriptionInput = document.createElement('textarea');
+            descriptionInput.name = 'descriptions';
+            descriptionInput.placeholder = 'tags';
+            descriptionInput.className = 'form-control mt-2';
+            descriptionInput.value = item.description.value;
+            cardBody.appendChild(descriptionInput);
+            card.appendChild(cardBody);
+            
+            col.appendChild(card);
+            previewContainer.appendChild(col);
+        });
+    }
+</script>
+
+{% endblock content %}

@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}마이페이지{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="my-4">마이페이지</h1>
+
+    <form method="POST" action="{% url 'update_descriptions' %}">
+        {% csrf_token %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex">
+                <a href="?sort=latest" class="btn btn-primary mr-2">최신순</a>
+                <a href="?sort=likes" class="btn btn-primary mr-2">찜순</a>
+            </div>
+            <button type="submit" class="btn btn-primary update-descriptions-btn mr-2">태그 일괄 적용</button>
+            <a href="{% url 'edit_profile' %}" class="btn btn-secondary mr-2">내 정보 수정</a> <!-- 내 정보 수정 버튼 추가 -->
+            <div class="controls d-flex align-items-center">
+                <div class="select-all mr-2">
+                    <input type="checkbox" id="select-all" class="large-checkbox-all">
+                    <label for="select-all">전체 선택</label>
+                </div>
+                <button type="submit" formaction="{% url 'delete_photos' %}" class="btn btn-danger delete-btn">선택된 파일 삭제</button>
+            </div>
+        </div>
+    
+        <div class="row photo-gallery">
+            {% if photos %}
+                {% for photo in photos %}
+                    <div class="col-lg-3 col-md-4 col-6 mb-4">
+                        <div class="card">
+                            <a href="{% url 'photo_detail' photo.id %}">
+                                <img src="{{ photo.image.url }}" class="card-img-top" alt="...">
+                            </a>
+                            <div class="card-body">
+                                <input type="hidden" name="photo_ids" value="{{ photo.id }}">
+                                <input type="text" name="descriptions" value="{{ photo.description }}" class="form-control mb-2">
+                                {% if user.is_authenticated %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <button class="btn btn-primary like-button" data-photo-id="{{ photo.id }}">
+                                            {% if user in photo.liked_by.all %}
+                                                ❤️ {{ photo.likes }}
+                                            {% else %}
+                                                🤍 {{ photo.likes }}
+                                            {% endif %}
+                                        </button>
+                                        <input type="checkbox" name="photos" value="{{ photo.id }}" class="photo-checkbox large-checkbox">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>내가 올린 사진 없음</p>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="pagination d-flex justify-content-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if photos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in photos.paginator.page_range %}
+                    {% if photos.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > photos.number|add:'-3' and num < photos.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if photos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ photos.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.getElementById('select-all').addEventListener('change', function(event) {
+        const checkboxes = document.querySelectorAll('.photo-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = event.target.checked;
+        });
+    });
+
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', function(event) {
+            if (event.target.tagName !== 'A' && event.target.tagName !== 'INPUT') {
+                const checkbox = this.querySelector('.photo-checkbox');
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
+
+    document.querySelector('.update-descriptions-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+        const form = this.closest('form');
+        form.action = "{% url 'update_descriptions' %}";
+        console.log(form)
+        form.submit();
+    });
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const photoId = this.getAttribute('data-photo-id');
+                fetch(`{% url 'like_photo' 0 %}`.replace('0', photoId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ photo_id: photoId })
+                })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        this.innerHTML = data.liked ? `❤️ ${data.likes}` : `🤍 ${data.likes}`;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
+
+<style>
+    .large-checkbox {
+        transform: scale(2);
+        margin-right: 10px;
+    }
+
+    .large-checkbox-all {
+        display: none; 
+    }
+
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .select-all {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+    }
+    .delete-btn {
+        margin-left: 10px; /* 오른쪽 버튼 사이 여백 추가 */
+    }
+
+    .select-all label {
+        display: inline-block;
+        padding: 5px 10px; /* 다른 버튼과 크기 통일 */
+        height: 38px; /* "선택된 파일 삭제" 버튼과 동일한 높이로 설정 */
+        line-height: 28px; /* 텍스트가 중앙에 오도록 설정 */
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .select-all input:checked + label {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}

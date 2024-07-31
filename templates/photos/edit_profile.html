@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}내 정보 수정{% endblock %}
+{% block content %}
+<body class="bg-gradient-primary">
+    <div class="container">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-gray-900 mb-4">내 정보 수정</h1>
+                            </div>
+                            <form method="post" action="{% url 'edit_profile' %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="username">사용자 이름</label>
+                                    <input type="text" class="form-control" name="username" id="username"
+                                           value="{{ form.username.value|default_if_none:'' }}">
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">
+                                            {{ form.username.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="phone">전화번호</label>
+                                    <input type="text" class="form-control" name="phone" id="phone"
+                                           value="{{ form.phone.value|default_if_none:'' }}">
+                                    {% if form.phone.errors %}
+                                        <div class="text-danger">
+                                            {{ form.phone.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password1">비밀번호</label>
+                                    <input type="password" class="form-control" name="password1" id="password1"
+                                           value="{{ form.password1.value|default_if_none:'' }}">
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger">
+                                            {{ form.password1.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password2">비밀번호 확인</label>
+                                    <input type="password" class="form-control" name="password2" id="password2"
+                                           value="{{ form.password2.value|default_if_none:'' }}">
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger">
+                                            {{ form.password2.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <button type="submit" class="btn btn-primary">수정하기</button>
+                                {% if messages %}
+                                    <div class="alert alert-info mt-3">
+                                        {% for message in messages %}
+                                            <p>{{ message }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

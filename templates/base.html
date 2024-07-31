@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko-kr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>회기농장 배급소</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-nav .nav-item {
+            margin-left: 1rem;
+        }
+        /* 다크모드 스타일 */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .navbar.dark-mode {
+            background-color: #333333;
+        }
+        .navbar.dark-mode .nav-link {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body id="page-top">
+
+<!-- Topbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <a class="navbar-brand" href="{% url 'photo_list' %}">회기농장 배급소</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'today_photos' %}">오늘의 배급</a>
+            </li>
+            <li class="nav-item">
+                {% if user.is_authenticated %}
+                    <a class="nav-link" href="{% url 'liked_photos' %}">찜한 사진</a>
+                {% else %}
+                    <a class="nav-link" href="{% url 'login' %}">찜한 사진</a>
+                {% endif %}
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'upload_photo' %}">사진 업로드</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'my_photos' %}">마이페이지</a>
+                </li>
+                <li class="nav-item">
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link nav-link" style="border: none; background: none;">
+                            로그아웃
+                        </button>
+                    </form>
+                </li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">로그인</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'signup' %}">회원가입</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+<!-- End of Topbar -->
+
+<!-- Page Wrapper -->
+
+<div id="wrapper">
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+            {% block content %}
+            <!-- Your page content goes here -->
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
